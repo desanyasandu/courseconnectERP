@@ -15,6 +15,79 @@ const ROLE_COLORS = {
     student: { bg: '#eef2ff', text: '#3730a3', border: '#c7d2fe' },
 };
 
+function ReviewForm({ courseId, studentId, onCompleted }: { courseId: string; studentId: string; onCompleted: () => void }) {
+    const [rating, setRating] = useState(5);
+    const [comment, setComment] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [success, setSuccess] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            const res = await fetch('/api/reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ course_id: courseId, student_id: studentId, rating, comment })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setSuccess(true);
+                setTimeout(() => {
+                    onCompleted();
+                }, 1500);
+            }
+        } catch (err) {
+            console.error("Failed to submit review", err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (success) {
+        return (
+            <div style={{ fontSize: '0.8rem', color: '#059669', display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 0', fontWeight: 600 }}>
+                <span>✅</span> Thank you! Rating submitted.
+            </div>
+        );
+    }
+
+    return (
+        <form onSubmit={handleSubmit} style={{ marginTop: '12px', padding: '12px', background: '#f8f9ff', borderRadius: '10px', border: '1px dashed #c7d2fe' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#374151' }}>Rate this course:</span>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRating(star)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: 0 }}
+                        >
+                            {star <= rating ? '⭐' : '☆'}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <textarea
+                placeholder="Share your experience..."
+                value={comment}
+                onChange={e => setComment(e.target.value)}
+                className="cc-input"
+                style={{ padding: '6px 10px', fontSize: '0.78rem', minHeight: '44px', marginBottom: '8px', borderRadius: '8px' }}
+            />
+            <button
+                type="submit"
+                disabled={submitting}
+                className="btn btn-primary btn-sm"
+                style={{ width: '100%', justifyContent: 'center', fontSize: '0.75rem', padding: '6px 12px' }}
+            >
+                {submitting ? 'Submitting...' : 'Submit Rating'}
+            </button>
+        </form>
+    );
+}
+
 export default function Dashboard() {
     const router = useRouter();
     const [courses, setCourses] = useState<any[]>([]);
@@ -23,12 +96,14 @@ export default function Dashboard() {
     const [studentProgress, setStudentProgress] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [userId, setUserId] = useState<string | null>(null);
 
     useEffect(() => {
         const role = localStorage.getItem('userRole');
         const uid = localStorage.getItem('userId');
         if (!role) { router.push('/login'); return; }
         setUserRole(role);
+        setUserId(uid);
 
         const fetches: Promise<any>[] = [
             fetch('/api/courses').then(r => r.json())
@@ -258,6 +333,19 @@ export default function Dashboard() {
                                                             style={{ width: `${pct}%` }}
                                                         />
                                                     </div>
+                                                    {userId && (
+                                                        <ReviewForm
+                                                            courseId={en.COURSE_ID}
+                                                            studentId={userId}
+                                                            onCompleted={() => {
+                                                                fetch('/api/analytics/top-rated')
+                                                                    .then(r => r.json())
+                                                                    .then(data => {
+                                                                        if (data.success) setTopCourses(data.data);
+                                                                    });
+                                                            }}
+                                                        />
+                                                    )}
                                                 </div>
                                             );
                                         })}
