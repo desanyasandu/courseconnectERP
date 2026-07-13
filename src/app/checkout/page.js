@@ -38,6 +38,8 @@ const IconLock = ({ size = '16px' }) => (
     </svg>
 );
 
+const PAYMENT_METHODS = ['Credit Card', 'Bank Transfer', 'Cash'];
+
 export default function CheckoutPage() {
     const router = useRouter();
     const [courses, setCourses] = useState([]);
