@@ -19,9 +19,32 @@ export default function CheckoutPage() {
     useEffect(() => {
         const role = localStorage.getItem('userRole');
         if (!role) { router.push('/login'); return; }
+        
+        const uid = localStorage.getItem('userId');
+        
         fetch('/api/courses')
             .then(r => r.json())
-            .then(data => { if (data.success) setCourses(data.data); })
+            .then(data => { 
+                if (data.success) {
+                    setCourses(data.data);
+                    const searchParams = new URLSearchParams(window.location.search);
+                    const queryCourseId = searchParams.get('courseId');
+                    if (queryCourseId) {
+                        const course = data.data.find(c => c.COURSE_ID === queryCourseId);
+                        setFormData(prev => ({
+                            ...prev,
+                            student_id: uid || '',
+                            course_id: queryCourseId,
+                            amount: course ? course.PRICE : ''
+                        }));
+                    } else {
+                        setFormData(prev => ({
+                            ...prev,
+                            student_id: uid || ''
+                        }));
+                    }
+                }
+            })
             .catch(console.error)
             .finally(() => setLoadingCourses(false));
     }, [router]);

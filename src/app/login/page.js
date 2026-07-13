@@ -22,6 +22,7 @@ export default function LoginPage() {
             const data = await res.json();
             if (data.success) {
                 localStorage.setItem('userRole', data.user.ROLE);
+                localStorage.setItem('userId', data.user.USER_ID);
                 router.push('/');
             } else {
                 setError(data.message || 'Invalid credentials. Please try again.');
