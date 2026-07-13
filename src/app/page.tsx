@@ -2,11 +2,35 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+const IconCap = () => (
+    <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.906 59.906 0 0 1 10.399 5.84a50.58 50.58 0 0 0-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443" />
+    </svg>
+);
+
+const IconChat = () => (
+    <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.17 48.17 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+    </svg>
+);
+
+const IconCard = () => (
+    <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-5.25-9h16.5a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H3.75a1.5 1.5 0 0 1-1.5-1.5v-9a1.5 1.5 0 0 1 1.5-1.5Z" />
+    </svg>
+);
+
+const IconPlus = () => (
+    <svg style={{ width: '15px', height: '15px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+);
+
 const NAV_LINKS = [
-    { href: '/forums', label: '💬 Forums', roles: ['all'] },
-    { href: '/progress', label: '🎓 Progress', roles: ['all'] },
-    { href: '/checkout', label: '💳 Checkout', roles: ['all'] },
-    { href: '/create-course', label: '+ New Course', roles: ['admin', 'lecturer'], primary: true },
+    { href: '/forums', label: 'Forums', icon: IconChat, roles: ['all'] },
+    { href: '/progress', label: 'Progress', icon: IconCap, roles: ['all'] },
+    { href: '/checkout', label: 'Checkout', icon: IconCard, roles: ['all'] },
+    { href: '/create-course', label: 'New Course', icon: IconPlus, roles: ['admin', 'lecturer'], primary: true },
 ];
 
 const ROLE_COLORS = {
@@ -155,12 +179,17 @@ export default function Dashboard() {
                 <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px' }}>
                     {/* Brand */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                            width: '36px', height: '36px', borderRadius: '10px',
-                            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '18px', boxShadow: '0 4px 12px rgba(79,70,229,0.35)'
-                        }}>🎓</div>
+                        <img 
+                            src="/logo.png" 
+                            alt="Logo" 
+                            style={{
+                                width: '36px', 
+                                height: '36px', 
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                boxShadow: '0 4px 12px rgba(79,70,229,0.15)'
+                            }}
+                        />
                         <div>
                             <div style={{ fontWeight: 800, fontSize: '0.95rem', letterSpacing: '-0.02em', color: '#111827' }}>CourseConnect</div>
                             <div style={{ fontSize: '0.7rem', color: '#6b7280', fontWeight: 500 }}>Enterprise</div>
@@ -171,12 +200,15 @@ export default function Dashboard() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {NAV_LINKS.map(link => {
                             if (!link.roles.includes('all') && !link.roles.includes(userRole || '')) return null;
+                            const Icon = link.icon;
                             return (
                                 <button
                                     key={link.href}
                                     onClick={() => router.push(link.href)}
                                     className={link.primary ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                                 >
+                                    <Icon />
                                     {link.label}
                                 </button>
                             );
@@ -200,9 +232,13 @@ export default function Dashboard() {
                             className="btn btn-sm"
                             style={{
                                 background: '#fef2f2', color: '#dc2626',
-                                border: '1px solid #fecaca', marginLeft: '4px'
+                                border: '1px solid #fecaca', marginLeft: '4px',
+                                display: 'inline-flex', alignItems: 'center', gap: '6px'
                             }}
                         >
+                            <svg style={{ width: '14px', height: '14px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.2" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                            </svg>
                             Sign Out
                         </button>
                     </div>
@@ -343,7 +379,13 @@ export default function Dashboard() {
                                 </div>
                                 {studentProgress.length === 0 ? (
                                     <div className="cc-card" style={{ padding: '60px', textAlign: 'center', background: '#fff' }}>
-                                        <p style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎓</p>
+                                        <div style={{
+                                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                            width: '56px', height: '56px', borderRadius: '50%',
+                                            background: '#eef2ff', color: '#4f46e5', marginBottom: '16px'
+                                        }}>
+                                            <IconCap />
+                                        </div>
                                         <p style={{ fontWeight: 600, color: '#374151', margin: '0 0 6px 0' }}>No Active Enrollments</p>
                                         <p style={{ color: '#9ca3af', fontSize: '0.875rem', margin: 0 }}>Choose a course from the catalog below to enroll and begin your learning path!</p>
                                     </div>
@@ -411,7 +453,15 @@ export default function Dashboard() {
 
                             {courses.length === 0 ? (
                                 <div className="cc-card" style={{ padding: '60px', textAlign: 'center' }}>
-                                    <p style={{ fontSize: '2rem', marginBottom: '12px' }}>📚</p>
+                                    <div style={{
+                                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                        width: '56px', height: '56px', borderRadius: '50%',
+                                        background: '#f1f5f9', color: '#64748b', marginBottom: '16px'
+                                    }}>
+                                        <svg style={{ width: '24px', height: '24px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                                        </svg>
+                                    </div>
                                     <p style={{ color: '#6b7280', fontWeight: 500 }}>No published courses yet</p>
                                 </div>
                             ) : (
@@ -459,10 +509,11 @@ export default function Dashboard() {
                                                     <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f3f4f6' }}>
                                                         <button
                                                             className="btn btn-primary"
-                                                            style={{ width: '100%', justifyContent: 'center' }}
+                                                            style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                                                             onClick={() => router.push(`/checkout?courseId=${course.COURSE_ID}`)}
                                                         >
-                                                            💳 Enroll &amp; Pay
+                                                            <IconCard />
+                                                            Enroll &amp; Pay
                                                         </button>
                                                     </div>
                                                 )}
@@ -472,7 +523,7 @@ export default function Dashboard() {
                                                     <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #fef2f2' }}>
                                                         <button
                                                             className="btn btn-danger btn-sm"
-                                                            style={{ width: '100%', justifyContent: 'center' }}
+                                                            style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                                                             onClick={async () => {
                                                                 if (confirm('Delete this course permanently?')) {
                                                                     await fetch(`/api/courses?id=${course.COURSE_ID}`, { method: 'DELETE' });
@@ -480,7 +531,10 @@ export default function Dashboard() {
                                                                 }
                                                             }}
                                                         >
-                                                            🗑 Delete Course
+                                                            <svg style={{ width: '13px', height: '13px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.2" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                                            </svg>
+                                                            Delete Course
                                                         </button>
                                                     </div>
                                                 )}

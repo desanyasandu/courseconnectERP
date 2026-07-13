@@ -2,7 +2,41 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-const PAYMENT_METHODS = ['Credit Card', 'Bank Transfer', 'Cash'];
+const IconCap = () => (
+    <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.906 59.906 0 0 1 10.399 5.84a50.58 50.58 0 0 0-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443" />
+    </svg>
+);
+
+const IconArrowLeft = () => (
+    <svg style={{ width: '14px', height: '14px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+    </svg>
+);
+
+const IconCard = ({ size = '16px' }) => (
+    <svg style={{ width: size, height: size }} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-5.25-9h16.5a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H3.75a1.5 1.5 0 0 1-1.5-1.5v-9a1.5 1.5 0 0 1 1.5-1.5Z" />
+    </svg>
+);
+
+const IconBank = () => (
+    <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.5M4.5 21V10.5M3 21h18M12 9.75v-1.5" />
+    </svg>
+);
+
+const IconCash = () => (
+    <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5h16.5c.9 0 1.634.629 1.775 1.496l1.32 8.188c.11.685-.382 1.316-1.075 1.316h-20.14c-.693 0-1.186-.631-1.075-1.316l1.32-8.188A1.8 1.8 0 0 1 3.75 4.5ZM12 9.75a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
+    </svg>
+);
+
+const IconLock = ({ size = '16px' }) => (
+    <svg style={{ width: size, height: size }} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+    </svg>
+);
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -84,14 +118,23 @@ export default function CheckoutPage() {
             <nav className="cc-nav" style={{ padding: '0 32px' }}>
                 <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                            width: '36px', height: '36px', borderRadius: '10px',
-                            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px'
-                        }}>🎓</div>
+                        <img 
+                            src="/logo.png" 
+                            alt="Logo" 
+                            style={{
+                                width: '36px', 
+                                height: '36px', 
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                boxShadow: '0 4px 12px rgba(79,70,229,0.15)'
+                            }}
+                        />
                         <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#111827' }}>CourseConnect</span>
                     </div>
-                    <button className="btn btn-ghost btn-sm" onClick={() => router.push('/')}>← Dashboard</button>
+                    <button className="btn btn-ghost btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={() => router.push('/')}>
+                        <IconArrowLeft />
+                        Dashboard
+                    </button>
                 </div>
             </nav>
 
@@ -101,8 +144,10 @@ export default function CheckoutPage() {
                         <div style={{
                             width: '44px', height: '44px', borderRadius: '12px',
                             background: '#ecfdf5', display: 'flex', alignItems: 'center',
-                            justifyContent: 'center', fontSize: '22px', border: '1px solid #a7f3d0'
-                        }}>💳</div>
+                            justifyContent: 'center', color: '#059669', border: '1px solid #a7f3d0'
+                        }}>
+                            <IconCard size="20px" />
+                        </div>
                         <h1 style={{ fontSize: '1.75rem', fontWeight: 900, letterSpacing: '-0.03em', margin: 0 }} className="gradient-text">
                             Tuition Checkout
                         </h1>
@@ -114,12 +159,18 @@ export default function CheckoutPage() {
 
                 {message && (
                     <div className="alert-success fade-in" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem' }}>
-                        <span>🎉</span> {message}
+                        <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                        </svg>
+                        {message}
                     </div>
                 )}
                 {error && (
                     <div className="alert-error fade-in" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span>⚠️</span> {error}
+                        <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                        </svg>
+                        {error}
                     </div>
                 )}
 
@@ -173,7 +224,7 @@ export default function CheckoutPage() {
                                 <div style={{ display: 'flex', gap: '10px' }}>
                                     {PAYMENT_METHODS.map(m => (
                                         <label key={m} style={{
-                                            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                                             padding: '10px 8px', borderRadius: '10px', cursor: 'pointer',
                                             border: `2px solid ${formData.payment_method === m ? '#4f46e5' : '#e5e7eb'}`,
                                             background: formData.payment_method === m ? '#eef2ff' : '#fff',
@@ -183,7 +234,10 @@ export default function CheckoutPage() {
                                             <input type="radio" name="pm" value={m} checked={formData.payment_method === m}
                                                 onChange={e => setFormData({ ...formData, payment_method: e.target.value })}
                                                 style={{ display: 'none' }} />
-                                            {m === 'Credit Card' ? '💳' : m === 'Bank Transfer' ? '🏦' : '💵'} {m}
+                                            {m === 'Credit Card' && <IconCard size="14px" />}
+                                            {m === 'Bank Transfer' && <IconBank />}
+                                            {m === 'Cash' && <IconCash />}
+                                            {m}
                                         </label>
                                     ))}
                                 </div>
@@ -212,13 +266,18 @@ export default function CheckoutPage() {
                                 </div>
                             )}
 
-                            <button type="submit" disabled={loadingSubmit} className="btn btn-primary btn-lg" style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, #059669, #0d9488)', boxShadow: '0 4px 14px rgba(5,150,105,0.35)' }}>
+                            <button type="submit" disabled={loadingSubmit} className="btn btn-primary btn-lg" style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #059669, #0d9488)', boxShadow: '0 4px 14px rgba(5,150,105,0.35)' }}>
                                 {loadingSubmit ? (
                                     <>
                                         <div className="spinner" style={{ width: '16px', height: '16px', borderTopColor: 'white', borderColor: 'rgba(255,255,255,0.3)' }} />
                                         Processing...
                                     </>
-                                ) : '🔒 Complete Payment'}
+                                ) : (
+                                    <>
+                                        <IconLock size="15px" />
+                                        Complete Payment
+                                    </>
+                                )}
                             </button>
                         </form>
                     </div>
@@ -260,7 +319,7 @@ export default function CheckoutPage() {
                             background: '#f8f9ff', borderRadius: '12px', border: '1px solid #e0e7ff',
                             padding: '14px 16px', display: 'flex', gap: '10px', alignItems: 'flex-start'
                         }}>
-                            <span>🔐</span>
+                            <span style={{ color: '#4f46e5', marginTop: '2px' }}><IconLock size="14px" /></span>
                             <p style={{ fontSize: '0.78rem', color: '#6b7280', margin: 0 }}>
                                 Payments are securely logged in Oracle DB. This transaction creates a permanent record.
                             </p>

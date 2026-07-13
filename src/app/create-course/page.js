@@ -2,6 +2,24 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+const IconCap = () => (
+    <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.906 59.906 0 0 1 10.399 5.84a50.58 50.58 0 0 0-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443" />
+    </svg>
+);
+
+const IconArrowLeft = () => (
+    <svg style={{ width: '14px', height: '14px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+    </svg>
+);
+
+const IconRocket = () => (
+    <svg style={{ width: '15px', height: '15px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.59 2.118a14.98 14.98 0 0 0-3.478 3.8m13.3 8.452a14.98 14.98 0 0 1-3.478 3.8m3.478-3.8c-.342.342-.716.657-1.12.942m-5.18 5.093c.285-.404.6-.778.943-1.12m0 0c.342-.342.66-.713.953-1.112m-9.07 9.07a3 3 0 1 1-4.243-4.243 14.98 14.98 0 0 1 4.242 4.243Z" />
+    </svg>
+);
+
 export default function CreateCoursePage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
@@ -45,15 +63,22 @@ export default function CreateCoursePage() {
             <nav className="cc-nav" style={{ padding: '0 32px' }}>
                 <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                            width: '36px', height: '36px', borderRadius: '10px',
-                            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px'
-                        }}>🎓</div>
+                        <img 
+                            src="/logo.png" 
+                            alt="Logo" 
+                            style={{
+                                width: '36px', 
+                                height: '36px', 
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                boxShadow: '0 4px 12px rgba(79,70,229,0.15)'
+                            }}
+                        />
                         <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#111827' }}>CourseConnect</span>
                     </div>
-                    <button className="btn btn-ghost btn-sm" onClick={() => router.push('/')}>
-                        ← Back to Dashboard
+                    <button className="btn btn-ghost btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={() => router.push('/')}>
+                        <IconArrowLeft />
+                        Dashboard
                     </button>
                 </div>
             </nav>
@@ -71,7 +96,10 @@ export default function CreateCoursePage() {
 
                 {success && (
                     <div className="alert-success fade-in" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span>✅</span> Course created! Redirecting to dashboard...
+                        <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                        </svg>
+                        Course created! Redirecting to dashboard...
                     </div>
                 )}
 
@@ -133,13 +161,18 @@ export default function CreateCoursePage() {
                             <button type="button" className="btn btn-ghost" onClick={() => router.push('/')}>
                                 Cancel
                             </button>
-                            <button type="submit" className="btn btn-primary" disabled={loading}>
+                            <button type="submit" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }} disabled={loading}>
                                 {loading ? (
                                     <>
                                         <div className="spinner" style={{ width: '16px', height: '16px', borderTopColor: 'white', borderColor: 'rgba(255,255,255,0.3)' }} />
                                         Publishing...
                                     </>
-                                ) : '🚀 Publish Course'}
+                                ) : (
+                                    <>
+                                        <IconRocket />
+                                        Publish Course
+                                    </>
+                                )}
                             </button>
                         </div>
                     </form>

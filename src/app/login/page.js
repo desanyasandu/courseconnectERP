@@ -46,15 +46,19 @@ export default function LoginPage() {
             <div style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 1 }} className="fade-in-up">
                 {/* Logo / Brand */}
                 <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-                    <div style={{
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        width: '56px', height: '56px', borderRadius: '16px',
-                        background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                        boxShadow: '0 8px 24px rgba(79,70,229,0.35)',
-                        marginBottom: '20px'
-                    }}>
-                        <span style={{ fontSize: '24px' }}>🎓</span>
-                    </div>
+                    <img 
+                        src="/logo.png" 
+                        alt="CourseConnect Logo" 
+                        style={{
+                            width: '110px', 
+                            height: '110px', 
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            boxShadow: '0 8px 24px rgba(79,70,229,0.12)',
+                            margin: '0 auto 20px auto',
+                            display: 'block'
+                        }}
+                    />
                     <h1 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, letterSpacing: '-0.03em' }} className="gradient-text">
                         CourseConnect
                     </h1>
