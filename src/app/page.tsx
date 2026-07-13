@@ -69,6 +69,15 @@ export default function Dashboard() {
                             + Create New Course
                         </button>
                     )}
+                    <button 
+                        onClick={() => {
+                            localStorage.removeItem('userRole');
+                            router.push('/login');
+                        }}
+                        className="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 font-bold py-2 px-4 rounded-lg shadow-sm transition-colors"
+                    >
+                        🚪 Sign Out ({userRole})
+                    </button>
                 </div>
             </header>
 

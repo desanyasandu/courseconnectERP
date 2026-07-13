@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function CreateCoursePage() {
@@ -13,6 +13,15 @@ export default function CreateCoursePage() {
         price: '',
         category: ''
     });
+
+    useEffect(() => {
+        const role = localStorage.getItem('userRole');
+        if (!role) {
+            router.push('/login');
+        } else if (role !== 'admin' && role !== 'lecturer') {
+            router.push('/');
+        }
+    }, [router]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
