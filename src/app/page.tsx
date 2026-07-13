@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
+    const router = useRouter();
     const [courses, setCourses] = useState<any[]>([]);
     const [revenue, setRevenue] = useState<number>(0);
     const [topCourses, setTopCourses] = useState<any[]>([]);
@@ -10,6 +12,10 @@ export default function Dashboard() {
 
     useEffect(() => {
         const role = localStorage.getItem('userRole');
+        if (!role) {
+            router.push('/login');
+            return;
+        }
         setUserRole(role);
 
         // Fetch all data points concurrently
@@ -25,7 +31,7 @@ export default function Dashboard() {
             setLoading(false);
         })
         .catch(err => console.error("Data fetching error:", err));
-    }, []);
+    }, [router]);
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-800 font-sans p-8">
@@ -39,14 +45,26 @@ export default function Dashboard() {
                 <div className="flex gap-4">
                     <button 
                         onClick={() => window.location.href = '/forums'}
-                        className="bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 font-bold py-2 px-6 rounded-lg shadow-sm transition-colors"
+                        className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-2 px-4 rounded-lg shadow-sm transition-colors"
                     >
                         💬 Open Forums
+                    </button>
+                    <button 
+                        onClick={() => window.location.href = '/progress'}
+                        className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-2 px-4 rounded-lg shadow-sm transition-colors"
+                    >
+                        🎓 View Progress
+                    </button>
+                    <button 
+                        onClick={() => window.location.href = '/checkout'}
+                        className="bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 font-bold py-2 px-4 rounded-lg shadow-sm transition-colors"
+                    >
+                        💳 Tuition Checkout
                     </button>
                     {(userRole === 'admin' || userRole === 'lecturer') && (
                         <button 
                             onClick={() => window.location.href = '/create-course'}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors"
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors"
                         >
                             + Create New Course
                         </button>
