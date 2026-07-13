@@ -237,60 +237,99 @@ export default function Dashboard() {
                         {(userRole === 'admin' || userRole === 'lecturer') && (
                             <div style={{ display: 'grid', gridTemplateColumns: userRole === 'admin' ? '1fr 1fr' : '1fr', gap: '24px', marginBottom: '40px' }}>
                                 {/* Revenue Card (Only for Admin) */}
+                                {/* Revenue Card (Only for Admin) */}
                                 {userRole === 'admin' && (
                                     <div className="stat-card">
                                         <div style={{ position: 'relative', zIndex: 1 }}>
-                                            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.75, margin: '0 0 12px 0' }}>
+                                            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.75, margin: '0 0 4px 0' }}>
                                                 Total Platform Revenue
                                             </p>
-                                            <p style={{ fontSize: '2.4rem', fontWeight: 900, margin: '0 0 8px 0', letterSpacing: '-0.03em' }}>
+                                            <p style={{ fontSize: '2.2rem', fontWeight: 900, margin: '0 0 12px 0', letterSpacing: '-0.03em' }}>
                                                 Rs. {revenue.toLocaleString()}
                                             </p>
-                                            <p style={{ fontSize: '0.78rem', opacity: 0.65, margin: 0 }}>via Oracle PL/SQL function</p>
+                                            
+                                            {/* SVG Area/Trend Chart */}
+                                            <div style={{ marginTop: '12px' }}>
+                                                <svg viewBox="0 0 400 110" style={{ width: '100%', height: '90px', overflow: 'visible' }}>
+                                                    <defs>
+                                                        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
+                                                            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    {/* Area */}
+                                                    <path
+                                                        d="M 10 90 Q 100 40 200 70 T 390 20 L 390 100 L 10 100 Z"
+                                                        fill="url(#areaGrad)"
+                                                    />
+                                                    {/* Line */}
+                                                    <path
+                                                        d="M 10 90 Q 100 40 200 70 T 390 20"
+                                                        fill="none"
+                                                        stroke="#ffffff"
+                                                        strokeWidth="3"
+                                                        strokeLinecap="round"
+                                                    />
+                                                    {/* Dots */}
+                                                    <circle cx="10" cy="90" r="4.5" fill="#ffffff" />
+                                                    <circle cx="110" cy="52" r="4.5" fill="#ffffff" />
+                                                    <circle cx="200" cy="70" r="4.5" fill="#ffffff" />
+                                                    <circle cx="295" cy="48" r="4.5" fill="#ffffff" />
+                                                    <circle cx="390" cy="20" r="4.5" fill="#ffffff" />
+                                                    
+                                                    {/* Labels */}
+                                                    <text x="10" y="108" fill="rgba(255,255,255,0.7)" fontSize="8.5" textAnchor="middle">Jan</text>
+                                                    <text x="110" y="108" fill="rgba(255,255,255,0.7)" fontSize="8.5" textAnchor="middle">Feb</text>
+                                                    <text x="200" y="108" fill="rgba(255,255,255,0.7)" fontSize="8.5" textAnchor="middle">Mar</text>
+                                                    <text x="295" y="108" fill="rgba(255,255,255,0.7)" fontSize="8.5" textAnchor="middle">Apr</text>
+                                                    <text x="390" y="108" fill="rgba(255,255,255,0.7)" fontSize="8.5" textAnchor="middle">May</text>
+                                                </svg>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
 
                                 {/* Top Rated Card */}
-                                <div className="cc-card" style={{ padding: '24px' }}>
-                                    <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b7280', margin: '0 0 16px 0' }}>
-                                        Top Rated Courses
+                                <div className="cc-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                    <div>
+                                        <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6b7280', margin: '0 0 16px 0' }}>
+                                            Course Satisfaction Ratings
+                                        </p>
+                                        {topCourses.length === 0 ? (
+                                            <p style={{ color: '#9ca3af', fontSize: '0.875rem', padding: '16px 0' }}>No reviews data yet</p>
+                                        ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                                {topCourses.slice(0, 3).map((tc, idx) => {
+                                                    const scorePercent = (tc.average_rating / 5) * 100;
+                                                    return (
+                                                        <div key={idx}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                                                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#374151' }}>
+                                                                    {tc._id}
+                                                                </span>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#b45309' }}>⭐ {tc.average_rating.toFixed(1)}</span>
+                                                                    <span style={{ fontSize: '0.7rem', color: '#9ca3af' }}>({tc.total_reviews})</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="progress-track" style={{ height: '8px' }}>
+                                                                <div 
+                                                                    className="progress-fill" 
+                                                                    style={{ 
+                                                                        width: `${scorePercent}%`,
+                                                                        background: 'linear-gradient(90deg, #f59e0b, #d97706)'
+                                                                    }} 
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p style={{ fontSize: '0.72rem', color: '#9ca3af', marginTop: '16px', marginBottom: 0 }}>
+                                        Aggregation analysis of MongoDB student reviews
                                     </p>
-                                    {topCourses.length === 0 ? (
-                                        <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>No reviews data yet</p>
-                                    ) : (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                            {topCourses.slice(0, 4).map((tc, idx) => (
-                                                <div key={idx} style={{
-                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                                    background: '#f8f9ff', borderRadius: '10px', padding: '10px 14px',
-                                                    border: '1px solid #e0e7ff'
-                                                }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <span style={{
-                                                            width: '24px', height: '24px', borderRadius: '6px',
-                                                            background: 'linear-gradient(135deg,#4f46e5,#7c3aed)',
-                                                            color: 'white', fontSize: '0.7rem', fontWeight: 800,
-                                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                        }}>{idx + 1}</span>
-                                                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151' }}>
-                                                            {tc._id}
-                                                        </span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                        <span style={{ fontSize: '0.9rem' }}>⭐</span>
-                                                        <span style={{ fontWeight: 700, color: '#d97706', fontSize: '0.9rem' }}>
-                                                            {tc.average_rating.toFixed(1)}
-                                                        </span>
-                                                        <span style={{ fontSize: '0.72rem', color: '#9ca3af' }}>
-                                                            ({tc.total_reviews})
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <p style={{ fontSize: '0.72rem', color: '#9ca3af', marginTop: '12px', marginBottom: 0 }}>MongoDB aggregation pipeline</p>
                                 </div>
                             </div>
                         )}
