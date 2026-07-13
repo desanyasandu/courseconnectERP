@@ -5,84 +5,145 @@ import { useRouter } from 'next/navigation';
 export default function CreateCoursePage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
     const [formData, setFormData] = useState({
-        course_id: '',
-        lecturer_id: 'U002', // Defaulting to our seeded lecturer for now
-        title: '',
-        description: '',
-        price: '',
-        category: ''
+        course_id: '', lecturer_id: 'U002',
+        title: '', description: '', price: '', category: ''
     });
 
     useEffect(() => {
         const role = localStorage.getItem('userRole');
-        if (!role) {
-            router.push('/login');
-        } else if (role !== 'admin' && role !== 'lecturer') {
-            router.push('/');
-        }
+        if (!role) router.push('/login');
+        else if (role !== 'admin' && role !== 'lecturer') router.push('/');
     }, [router]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        
         try {
             const res = await fetch('/api/courses', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-            
             if (res.ok) {
-                router.push('/'); // Redirect back to dashboard
+                setSuccess(true);
+                setTimeout(() => router.push('/'), 1500);
             }
-        } catch (error) {
-            console.error("Failed to create course", error);
+        } catch (err) {
+            console.error(err);
         } finally {
             setLoading(false);
         }
     };
 
+    const CATEGORIES = ['Web Development', 'Data Science', 'Design', 'Business', 'Mobile Dev', 'Cybersecurity', 'AI & ML', 'Cloud Computing'];
+
     return (
-        <div className="min-h-screen bg-slate-50 p-8 flex justify-center items-center font-sans">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 w-full max-w-2xl">
-                <h1 className="text-3xl font-extrabold text-indigo-700 mb-6">Add New Course</h1>
-                
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid grid-cols-2 gap-5">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Course ID</label>
-                            <input type="text" required className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none" placeholder="e.g., C006" onChange={e => setFormData({...formData, course_id: e.target.value})} />
+        <div style={{ minHeight: '100vh' }}>
+            {/* Mini navbar */}
+            <nav className="cc-nav" style={{ padding: '0 32px' }}>
+                <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                            width: '36px', height: '36px', borderRadius: '10px',
+                            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px'
+                        }}>🎓</div>
+                        <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#111827' }}>CourseConnect</span>
+                    </div>
+                    <button className="btn btn-ghost btn-sm" onClick={() => router.push('/')}>
+                        ← Back to Dashboard
+                    </button>
+                </div>
+            </nav>
+
+            <div style={{ maxWidth: '680px', margin: '0 auto', padding: '48px 24px' }}>
+                {/* Header */}
+                <div style={{ marginBottom: '32px' }}>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 6px 0' }} className="gradient-text">
+                        Create New Course
+                    </h1>
+                    <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>
+                        Fill in the details below to publish a new course to the platform
+                    </p>
+                </div>
+
+                {success && (
+                    <div className="alert-success fade-in" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span>✅</span> Course created! Redirecting to dashboard...
+                    </div>
+                )}
+
+                <div style={{
+                    background: '#fff',
+                    borderRadius: '20px',
+                    border: '1.5px solid #e8eaf6',
+                    boxShadow: '0 8px 30px rgba(79,70,229,0.08)',
+                    overflow: 'hidden'
+                }}>
+                    {/* Card header accent */}
+                    <div style={{ height: '5px', background: 'linear-gradient(90deg, #4f46e5, #7c3aed, #a78bfa)' }} />
+
+                    <form onSubmit={handleSubmit} style={{ padding: '32px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                            <div>
+                                <label className="cc-label">Course ID</label>
+                                <input className="cc-input" required type="text" placeholder="e.g., C006"
+                                    onChange={e => setFormData({ ...formData, course_id: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="cc-label">Price (LKR)</label>
+                                <input className="cc-input" required type="number" placeholder="e.g., 5000"
+                                    onChange={e => setFormData({ ...formData, price: e.target.value })} />
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Price (LKR)</label>
-                            <input type="number" required className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none" placeholder="e.g., 5000" onChange={e => setFormData({...formData, price: e.target.value})} />
+
+                        <div style={{ marginBottom: '20px' }}>
+                            <label className="cc-label">Course Title</label>
+                            <input className="cc-input" required type="text" placeholder="e.g., Advanced React Development"
+                                onChange={e => setFormData({ ...formData, title: e.target.value })} />
                         </div>
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Course Title</label>
-                        <input type="text" required className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none" placeholder="Enter course title" onChange={e => setFormData({...formData, title: e.target.value})} />
-                    </div>
+                        <div style={{ marginBottom: '20px' }}>
+                            <label className="cc-label">Category</label>
+                            <select
+                                className="cc-input cc-select"
+                                required
+                                onChange={e => setFormData({ ...formData, category: e.target.value })}
+                            >
+                                <option value="">— Select a category —</option>
+                                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            </select>
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Category</label>
-                        <input type="text" required className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none" placeholder="e.g., Web Development" onChange={e => setFormData({...formData, category: e.target.value})} />
-                    </div>
+                        <div style={{ marginBottom: '32px' }}>
+                            <label className="cc-label">Course Description</label>
+                            <textarea
+                                className="cc-input"
+                                required
+                                rows={4}
+                                placeholder="Describe what students will learn in this course..."
+                                style={{ resize: 'vertical', fontFamily: 'Inter, sans-serif' }}
+                                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                            />
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Description</label>
-                        <textarea required rows="3" className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 outline-none" placeholder="Brief course description..." onChange={e => setFormData({...formData, description: e.target.value})}></textarea>
-                    </div>
-
-                    <div className="flex justify-end gap-4 mt-6">
-                        <button type="button" onClick={() => router.push('/')} className="px-6 py-2 rounded-lg font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Cancel</button>
-                        <button type="submit" disabled={loading} className="px-6 py-2 rounded-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400">
-                            {loading ? 'Saving...' : 'Create Course'}
-                        </button>
-                    </div>
-                </form>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button type="button" className="btn btn-ghost" onClick={() => router.push('/')}>
+                                Cancel
+                            </button>
+                            <button type="submit" className="btn btn-primary" disabled={loading}>
+                                {loading ? (
+                                    <>
+                                        <div className="spinner" style={{ width: '16px', height: '16px', borderTopColor: 'white', borderColor: 'rgba(255,255,255,0.3)' }} />
+                                        Publishing...
+                                    </>
+                                ) : '🚀 Publish Course'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     );

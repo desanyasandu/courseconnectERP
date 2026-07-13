@@ -13,75 +13,135 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
         setError('');
-
         try {
             const res = await fetch('/api/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
-            
             const data = await res.json();
-
             if (data.success) {
-                // Store user role in local storage for session management
                 localStorage.setItem('userRole', data.user.ROLE);
-                router.push('/'); // Redirect to dashboard
+                router.push('/');
             } else {
-                setError(data.message || 'Login failed');
+                setError(data.message || 'Invalid credentials. Please try again.');
             }
         } catch (err) {
-            setError('Server error. Please try again.');
+            setError('Unable to connect. Please check your connection.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans p-4">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 w-full max-w-md">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-extrabold text-indigo-700">CourseConnect</h1>
-                    <p className="text-slate-500 mt-2">Sign in to your account</p>
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+            {/* Background decoration */}
+            <div style={{
+                position: 'fixed', inset: 0, zIndex: 0,
+                background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,70,229,0.08) 0%, transparent 60%)',
+                pointerEvents: 'none'
+            }} />
+
+            <div style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 1 }} className="fade-in-up">
+                {/* Logo / Brand */}
+                <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+                    <div style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: '56px', height: '56px', borderRadius: '16px',
+                        background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                        boxShadow: '0 8px 24px rgba(79,70,229,0.35)',
+                        marginBottom: '20px'
+                    }}>
+                        <span style={{ fontSize: '24px' }}>🎓</span>
+                    </div>
+                    <h1 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, letterSpacing: '-0.03em' }} className="gradient-text">
+                        CourseConnect
+                    </h1>
+                    <p style={{ color: '#6b7280', marginTop: '6px', fontSize: '0.9rem', fontWeight: 500 }}>
+                        Enterprise Learning Management System
+                    </p>
                 </div>
 
-                {error && (
-                    <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-6 text-center border border-red-200">
-                        {error}
-                    </div>
-                )}
+                {/* Card */}
+                <div style={{
+                    background: '#fff',
+                    borderRadius: '20px',
+                    border: '1.5px solid #e8eaf6',
+                    boxShadow: '0 10px 40px rgba(79,70,229,0.1), 0 4px 16px rgba(0,0,0,0.06)',
+                    padding: '36px'
+                }}>
+                    <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 4px 0', color: '#111827' }}>
+                        Welcome back
+                    </h2>
+                    <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0 0 28px 0' }}>
+                        Sign in to access your dashboard
+                    </p>
 
-                <form onSubmit={handleLogin} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
-                        <input 
-                            type="email" 
-                            required 
-                            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
-                            placeholder="admin@app.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
+                    {error && (
+                        <div className="alert-error fade-in" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>⚠️</span> {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleLogin}>
+                        <div style={{ marginBottom: '18px' }}>
+                            <label className="cc-label">Email Address</label>
+                            <input
+                                type="email"
+                                required
+                                className="cc-input"
+                                placeholder="admin@courseconnect.app"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '26px' }}>
+                            <label className="cc-label">Password</label>
+                            <input
+                                type="password"
+                                required
+                                className="cc-input"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="btn btn-primary btn-lg"
+                            style={{ width: '100%', justifyContent: 'center' }}
+                        >
+                            {loading ? (
+                                <>
+                                    <div className="spinner" style={{ borderTopColor: 'white', borderColor: 'rgba(255,255,255,0.3)' }} />
+                                    Authenticating...
+                                </>
+                            ) : (
+                                <>Sign In →</>
+                            )}
+                        </button>
+                    </form>
+
+                    <div className="divider" />
+
+                    <div style={{
+                        background: '#f8f9ff',
+                        borderRadius: '10px',
+                        padding: '14px 16px',
+                        border: '1px solid #e0e7ff'
+                    }}>
+                        <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0, fontWeight: 500 }}>
+                            🔐 Your credentials are verified against the Oracle USERS table. Contact your administrator for access.
+                        </p>
                     </div>
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Password</label>
-                        <input 
-                            type="password" 
-                            required 
-                            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
-                            placeholder="••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-indigo-400"
-                    >
-                        {loading ? 'Authenticating...' : 'Sign In'}
-                    </button>
-                </form>
+                </div>
+
+                <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: '0.78rem', marginTop: '20px' }}>
+                    CourseConnect Enterprise © 2026 — Powered by Oracle + MongoDB
+                </p>
             </div>
         </div>
     );
