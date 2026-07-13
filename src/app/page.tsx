@@ -35,15 +35,23 @@ export default function Dashboard() {
                     <p className="text-slate-500 mt-2 text-lg font-medium">Platform Administration Dashboard</p>
                 </div>
                 
-                {/* New Button Here */}
-                {(userRole === 'admin' || userRole === 'lecturer') && (
+                {/* Navigation Buttons */}
+                <div className="flex gap-4">
                     <button 
-                        onClick={() => window.location.href = '/create-course'}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors"
+                        onClick={() => window.location.href = '/forums'}
+                        className="bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 font-bold py-2 px-6 rounded-lg shadow-sm transition-colors"
                     >
-                        + Create New Course
+                        💬 Open Forums
                     </button>
-                )}
+                    {(userRole === 'admin' || userRole === 'lecturer') && (
+                        <button 
+                            onClick={() => window.location.href = '/create-course'}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors"
+                        >
+                            + Create New Course
+                        </button>
+                    )}
+                </div>
             </header>
 
             {loading ? (
