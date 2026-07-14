@@ -58,6 +58,10 @@ export default function CheckoutPage() {
     useEffect(() => {
         const role = localStorage.getItem('userRole');
         if (!role) { router.push('/login'); return; }
+        if (role !== 'student') {
+            router.push('/');
+            return;
+        }
         
         const uid = localStorage.getItem('userId');
         const generatedPaymentId = 'PAY' + Math.floor(100000 + Math.random() * 900000);

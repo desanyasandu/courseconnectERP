@@ -115,6 +115,7 @@ export default function StudentProgressPage() {
     const [userRole, setUserRole] = useState('');
     const [enrollments, setEnrollments] = useState([]);
     const [allStudents, setAllStudents] = useState([]);
+    const [allProgress, setAllProgress] = useState([]);
     const [searched, setSearched] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -141,12 +142,19 @@ export default function StudentProgressPage() {
                 .finally(() => setLoading(false));
         }
 
-        // Fetch all registered students for directory access if lecturer/admin
+        // Fetch all registered students and their global progress if lecturer/admin
         if (role === 'lecturer' || role === 'admin') {
             fetch('/api/students/list')
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) setAllStudents(data.data);
+                })
+                .catch(console.error);
+
+            fetch('/api/students/progress/all')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) setAllProgress(data.data);
                 })
                 .catch(console.error);
         }
@@ -373,6 +381,13 @@ export default function StudentProgressPage() {
                                                                 : item
                                                         )
                                                     );
+                                                    setAllProgress(prev =>
+                                                        prev.map(item =>
+                                                            item.ENROLLMENT_ID === en.ENROLLMENT_ID
+                                                                ? { ...item, PROGRESS_PERCENTAGE: newProgress, STATUS: newProgress >= 100 ? 'completed' : 'active' }
+                                                                : item
+                                                        )
+                                                    );
                                                 }}
                                             />
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
@@ -385,6 +400,72 @@ export default function StudentProgressPage() {
                             </div>
                         )}
                     </>
+                )}
+
+                {/* 2. Directory List of all enrolled students and progress */}
+                {userRole !== 'student' && allProgress.length > 0 && (
+                    <div style={{ marginTop: '48px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
+                                All Enrolled Students &amp; Course Progress
+                            </h2>
+                            <span className="badge badge-indigo" style={{ background: '#eef2ff', color: '#4f46e5', border: '1px solid #c7d2fe' }}>
+                                {allProgress.length} Enrollments
+                            </span>
+                        </div>
+                        <div className="cc-card" style={{ padding: 0, overflow: 'hidden', background: '#fff' }}>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                                    <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                        <tr>
+                                            <th style={{ padding: '14px 16px', fontWeight: 700, color: '#475569' }}>Student</th>
+                                            <th style={{ padding: '14px 16px', fontWeight: 700, color: '#475569' }}>Username</th>
+                                            <th style={{ padding: '14px 16px', fontWeight: 700, color: '#475569' }}>Course Title</th>
+                                            <th style={{ padding: '14px 16px', fontWeight: 700, color: '#475569', width: '220px' }}>Progress</th>
+                                            <th style={{ padding: '14px 16px', fontWeight: 700, color: '#475569', textAlign: 'right' }}>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {allProgress.map((p) => {
+                                            const pct = p.PROGRESS_PERCENTAGE || 0;
+                                            const done = pct >= 100 || p.STATUS === 'completed';
+                                            return (
+                                                <tr key={p.ENROLLMENT_ID} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                    <td style={{ padding: '14px 16px', fontWeight: 600, color: '#1e293b' }}>
+                                                        <div>{p.FIRST_NAME} {p.LAST_NAME}</div>
+                                                        <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>ID: {p.STUDENT_ID}</span>
+                                                    </td>
+                                                    <td style={{ padding: '14px 16px', color: '#475569' }}>@{p.USERNAME}</td>
+                                                    <td style={{ padding: '14px 16px', color: '#334155', fontWeight: 500 }}>{p.COURSE_TITLE}</td>
+                                                    <td style={{ padding: '14px 16px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                            <div className="progress-track" style={{ flex: 1, height: '8px', margin: 0 }}>
+                                                                <div className={`progress-fill ${done ? 'progress-fill-emerald' : ''}`} style={{ width: `${pct}%` }} />
+                                                            </div>
+                                                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: done ? '#059669' : '#4f46e5', minWidth: '32px', textAlign: 'right' }}>{pct}%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                                                        <button
+                                                            onClick={() => {
+                                                                setStudentId(p.STUDENT_ID);
+                                                                triggerSearch(p.STUDENT_ID);
+                                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                            }}
+                                                            className="btn btn-ghost btn-sm"
+                                                            style={{ color: '#4f46e5', borderColor: '#c7d2fe', padding: '4px 8px', fontSize: '0.75rem' }}
+                                                        >
+                                                            🔍 Edit Progress
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

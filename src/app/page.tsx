@@ -28,8 +28,8 @@ const IconPlus = () => (
 
 const NAV_LINKS = [
     { href: '/forums', label: 'Forums', icon: IconChat, roles: ['all'] },
-    { href: '/progress', label: 'Progress', icon: IconCap, roles: ['all'] },
-    { href: '/checkout', label: 'Checkout', icon: IconCard, roles: ['all'] },
+    { href: '/progress', label: 'Progress', icon: IconCap, roles: ['admin', 'lecturer'] },
+    { href: '/checkout', label: 'Checkout', icon: IconCard, roles: ['student'] },
     { href: '/create-course', label: 'New Course', icon: IconPlus, roles: ['admin', 'lecturer'], primary: true },
 ];
 
