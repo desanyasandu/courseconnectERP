@@ -112,12 +112,91 @@ function ReviewForm({ courseId, studentId, onCompleted }: { courseId: string; st
     );
 }
 
+function ProgressUpdater({ enrollmentId, initialProgress, onUpdated }: { enrollmentId: string; initialProgress: number; onUpdated: (val: number) => void }) {
+    const [progress, setProgress] = useState(initialProgress);
+    const [updating, setUpdating] = useState(false);
+    const [showSlider, setShowSlider] = useState(false);
+
+    // Sync progress state if initialProgress changes
+    useEffect(() => {
+        setProgress(initialProgress);
+    }, [initialProgress]);
+
+    const handleSave = async () => {
+        setUpdating(true);
+        try {
+            const res = await fetch('/api/enrollments', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enrollment_id: enrollmentId, progress_percentage: progress })
+            });
+            const data = await res.json();
+            if (data.success) {
+                onUpdated(progress);
+                setShowSlider(false);
+            }
+        } catch (err) {
+            console.error("Failed to update progress", err);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    return (
+        <div style={{ marginTop: '14px', borderTop: '1px dashed #e2e8f0', paddingTop: '12px' }}>
+            {!showSlider ? (
+                <button
+                    onClick={() => setShowSlider(true)}
+                    className="btn btn-ghost btn-sm"
+                    style={{ width: '100%', justifyContent: 'center', fontSize: '0.75rem', padding: '6px 12px' }}
+                >
+                    ⚙️ Update Progress
+                </button>
+            ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4b5563' }}>Adjust Progress:</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#4f46e5' }}>{progress}%</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="5"
+                            value={progress}
+                            onChange={(e) => setProgress(Number(e.target.value))}
+                            style={{ flex: 1, accentColor: '#4f46e5', cursor: 'pointer' }}
+                        />
+                        <button
+                            onClick={handleSave}
+                            disabled={updating}
+                            className="btn btn-primary btn-sm"
+                            style={{ fontSize: '0.72rem', padding: '4px 10px' }}
+                        >
+                            {updating ? 'Saving...' : 'Save'}
+                        </button>
+                        <button
+                            onClick={() => { setShowSlider(false); setProgress(initialProgress); }}
+                            className="btn btn-ghost btn-sm"
+                            style={{ fontSize: '0.72rem', padding: '4px 10px' }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function Dashboard() {
     const router = useRouter();
     const [courses, setCourses] = useState<any[]>([]);
     const [revenue, setRevenue] = useState<number>(0);
     const [topCourses, setTopCourses] = useState<any[]>([]);
     const [studentProgress, setStudentProgress] = useState<any[]>([]);
+    const [pendingPayments, setPendingPayments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [userRole, setUserRole] = useState<string | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
@@ -136,6 +215,14 @@ export default function Dashboard() {
         // Fetch revenue only for admin
         if (role === 'admin') {
             fetches.push(fetch('/api/reports/revenue').then(r => r.json()));
+            
+            // Also fetch pending payments for admin
+            fetch('/api/payments/pending')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) setPendingPayments(data.data);
+                })
+                .catch(console.error);
         } else {
             fetches.push(Promise.resolve({ success: true, totalRevenue: 0 }));
         }
@@ -164,13 +251,60 @@ export default function Dashboard() {
         }).catch(() => setLoading(false));
     }, [router]);
 
+    const handleApprovePayment = async (paymentId: string, enrollmentId: string) => {
+        try {
+            const res = await fetch('/api/payments/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ payment_id: paymentId, enrollment_id: enrollmentId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Filter out the approved payment from state
+                setPendingPayments(prev => prev.filter(p => p.PAYMENT_ID !== paymentId));
+                // Fetch updated revenue
+                fetch('/api/reports/revenue')
+                    .then(r => r.json())
+                    .then(revData => {
+                        if (revData.success) setRevenue(revData.totalRevenue);
+                    });
+            } else {
+                alert(data.error || "Failed to approve payment.");
+            }
+        } catch (err) {
+            console.error("Approval request failed", err);
+        }
+    };
+
+    const handleUnenroll = async (enrollmentId: string, courseTitle: string) => {
+        if (!confirm(`Are you sure you want to unenroll from "${courseTitle}"?`)) {
+            return;
+        }
+        try {
+            const res = await fetch('/api/enrollments/unenroll', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enrollment_id: enrollmentId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Filter out the enrollment from studentProgress locally
+                setStudentProgress(prev => prev.filter(e => e.ENROLLMENT_ID !== enrollmentId));
+            } else {
+                alert(data.error || "Failed to unenroll.");
+            }
+        } catch (err) {
+            console.error("Unenroll request failed", err);
+        }
+    };
+
     const handleSignOut = () => {
         localStorage.removeItem('userRole');
         localStorage.removeItem('userId');
         router.push('/login');
     };
 
-    const roleStyle = userRole ? ROLE_COLORS[userRole] || ROLE_COLORS.student : ROLE_COLORS.student;
+    const roleStyle = userRole && userRole in ROLE_COLORS ? ROLE_COLORS[userRole as keyof typeof ROLE_COLORS] : ROLE_COLORS.student;
 
     return (
         <div style={{ minHeight: '100vh', paddingBottom: '60px' }}>
@@ -370,6 +504,80 @@ export default function Dashboard() {
                             </div>
                         )}
 
+                        {/* 1.5 Admin Pending Approvals Section */}
+                        {userRole === 'admin' && (
+                            <section style={{ marginBottom: '48px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                                    <h2 style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.03em', margin: 0 }}>Pending Bank Payment Approvals</h2>
+                                    <span className="badge" style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a' }}>
+                                        {pendingPayments.length} Pending
+                                    </span>
+                                </div>
+
+                                {pendingPayments.length === 0 ? (
+                                    <div className="cc-card" style={{ padding: '40px', textAlign: 'center', background: '#fff' }}>
+                                        <p style={{ fontWeight: 600, color: '#374151', margin: '0 0 4px 0' }}>No Pending Approvals</p>
+                                        <p style={{ color: '#9ca3af', fontSize: '0.82rem', margin: 0 }}>All bank transfer slip payments have been processed.</p>
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+                                        {pendingPayments.map((p, idx) => (
+                                            <div key={p.PAYMENT_ID} className="cc-card fade-in-up" style={{ padding: '22px', background: '#fff', animationDelay: `${idx * 40}ms` }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                                                    <div>
+                                                        <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: '#111827' }}>
+                                                            {p.FIRST_NAME} {p.LAST_NAME}
+                                                        </h3>
+                                                        <p style={{ fontSize: '0.78rem', color: '#6b7280', margin: '4px 0 0 0' }}>
+                                                            Course: <strong style={{ color: '#4f46e5' }}>{p.COURSE_TITLE}</strong>
+                                                        </p>
+                                                    </div>
+                                                    <span className="badge badge-amber" style={{ flexShrink: 0 }}>
+                                                        Pending Approval
+                                                    </span>
+                                                </div>
+
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '14px', alignItems: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f3f4f6' }}>
+                                                    <div>
+                                                        <p style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', margin: 0 }}>Amount</p>
+                                                        <p style={{ fontSize: '1rem', fontWeight: 800, color: '#059669', margin: '2px 0 0 0' }}>Rs. {Number(p.AMOUNT).toLocaleString()}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', margin: 0 }}>Payment ID</p>
+                                                        <p style={{ fontSize: '0.8rem', fontWeight: 700, color: '#111827', margin: '2px 0 0 0' }}>{p.PAYMENT_ID}</p>
+                                                    </div>
+                                                </div>
+
+                                                {p.SLIP_URL && (
+                                                    <div style={{ marginTop: '16px' }}>
+                                                        <a 
+                                                            href={p.SLIP_URL} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="btn btn-ghost btn-sm"
+                                                            style={{ width: '100%', justifyContent: 'center', fontSize: '0.78rem', gap: '8px', color: '#4f46e5', borderColor: '#c7d2fe', background: '#f8f9ff' }}
+                                                        >
+                                                            📁 View Uploaded Receipt Slip
+                                                        </a>
+                                                    </div>
+                                                )}
+
+                                                <div style={{ marginTop: '14px', display: 'flex', gap: '10px' }}>
+                                                    <button
+                                                        onClick={() => handleApprovePayment(p.PAYMENT_ID, p.ENROLLMENT_ID)}
+                                                        className="btn btn-primary btn-sm"
+                                                        style={{ flex: 1, justifyContent: 'center', background: 'linear-gradient(135deg, #059669, #0d9488)', boxShadow: '0 2px 8px rgba(5,150,105,0.2)' }}
+                                                    >
+                                                        Approve Enrollment
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </section>
+                        )}
+
                         {/* 2. Student Active Enrollments progress Section */}
                         {userRole === 'student' && (
                             <section style={{ marginBottom: '48px' }}>
@@ -414,6 +622,20 @@ export default function Dashboard() {
                                                             style={{ width: `${pct}%` }}
                                                         />
                                                     </div>
+                                                    
+                                                    <ProgressUpdater
+                                                        enrollmentId={en.ENROLLMENT_ID}
+                                                        initialProgress={pct}
+                                                        onUpdated={(newProgress) => {
+                                                            setStudentProgress(prev =>
+                                                                prev.map(item =>
+                                                                    item.ENROLLMENT_ID === en.ENROLLMENT_ID
+                                                                        ? { ...item, PROGRESS_PERCENTAGE: newProgress, STATUS: newProgress >= 100 ? 'completed' : 'active' }
+                                                                        : item
+                                                                )
+                                                            );
+                                                        }}
+                                                    />
                                                     {userId && (
                                                         <ReviewForm
                                                             courseId={en.COURSE_ID}
@@ -427,6 +649,24 @@ export default function Dashboard() {
                                                             }}
                                                         />
                                                     )}
+                                                    
+                                                    <div style={{ marginTop: '16px', borderTop: '1px dashed #e2e8f0', paddingTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+                                                        <button
+                                                            onClick={() => handleUnenroll(en.ENROLLMENT_ID, en.TITLE)}
+                                                            className="btn btn-ghost btn-sm"
+                                                            style={{ 
+                                                                color: '#dc2626', 
+                                                                fontSize: '0.72rem', 
+                                                                padding: '6px 12px', 
+                                                                borderColor: '#fee2e2', 
+                                                                background: '#fef2f2',
+                                                                fontWeight: 600,
+                                                                borderRadius: '8px'
+                                                            }}
+                                                        >
+                                                            🚪 Unenroll
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             );
                                         })}
@@ -505,18 +745,43 @@ export default function Dashboard() {
                                                 </div>
 
                                                 {/* Student: Enroll / Checkout Button */}
-                                                {userRole === 'student' && (
-                                                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f3f4f6' }}>
-                                                        <button
-                                                            className="btn btn-primary"
-                                                            style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                                                            onClick={() => router.push(`/checkout?courseId=${course.COURSE_ID}`)}
-                                                        >
-                                                            <IconCard />
-                                                            Enroll &amp; Pay
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                {userRole === 'student' && (() => {
+                                                    const isEnrolled = studentProgress.some(sp => sp.COURSE_ID === course.COURSE_ID);
+                                                    return (
+                                                        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f3f4f6' }}>
+                                                            {isEnrolled ? (
+                                                                <div style={{
+                                                                    width: '100%',
+                                                                    padding: '10px 14px',
+                                                                    borderRadius: '10px',
+                                                                    background: '#ecfdf5',
+                                                                    color: '#047857',
+                                                                    border: '1.5px solid #a7f3d0',
+                                                                    fontWeight: 700,
+                                                                    fontSize: '0.875rem',
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    gap: '6px'
+                                                                }}>
+                                                                    <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                                                    </svg>
+                                                                    Already Enrolled
+                                                                </div>
+                                                            ) : (
+                                                                <button
+                                                                    className="btn btn-primary"
+                                                                    style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                                                    onClick={() => router.push(`/checkout?courseId=${course.COURSE_ID}`)}
+                                                                >
+                                                                    <IconCard />
+                                                                    Enroll &amp; Pay
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })()}
 
                                                 {/* Admin/Lecturer Controls */}
                                                 {(userRole === 'admin' || userRole === 'lecturer') && (

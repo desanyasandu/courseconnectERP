@@ -14,7 +14,7 @@ export async function GET(request) {
             SELECT e.enrollment_id, e.status, e.progress_percentage, c.course_id, c.title, c.category, c.price 
             FROM ENROLLMENT e
             JOIN COURSE c ON e.course_id = c.course_id
-            WHERE e.student_id = :1
+            WHERE e.student_id = :1 AND e.status != 'dropped'
         `;
         
         const result = await executeOracleQuery(query, [studentId]);

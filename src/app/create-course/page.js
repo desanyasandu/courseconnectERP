@@ -25,14 +25,27 @@ export default function CreateCoursePage() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [formData, setFormData] = useState({
-        course_id: '', lecturer_id: 'U002',
+        course_id: '', lecturer_id: '',
         title: '', description: '', price: '', category: ''
     });
 
     useEffect(() => {
         const role = localStorage.getItem('userRole');
-        if (!role) router.push('/login');
-        else if (role !== 'admin' && role !== 'lecturer') router.push('/');
+        const uid = localStorage.getItem('userId');
+        if (!role) {
+            router.push('/login');
+            return;
+        }
+        if (role !== 'admin' && role !== 'lecturer') {
+            router.push('/');
+            return;
+        }
+        const generatedCourseId = 'C' + Math.floor(1000 + Math.random() * 9000);
+        setFormData(prev => ({ 
+            ...prev, 
+            lecturer_id: uid || '',
+            course_id: generatedCourseId
+        }));
     }, [router]);
 
     const handleSubmit = async (e) => {
@@ -117,8 +130,9 @@ export default function CreateCoursePage() {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                             <div>
                                 <label className="cc-label">Course ID</label>
-                                <input className="cc-input" required type="text" placeholder="e.g., C006"
-                                    onChange={e => setFormData({ ...formData, course_id: e.target.value })} />
+                                <input className="cc-input" required type="text" readOnly
+                                    style={{ background: '#f3f4f6', cursor: 'not-allowed', color: '#6b7280' }}
+                                    value={formData.course_id} />
                             </div>
                             <div>
                                 <label className="cc-label">Price (LKR)</label>

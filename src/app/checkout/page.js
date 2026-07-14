@@ -49,14 +49,18 @@ export default function CheckoutPage() {
     const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         payment_id: '', student_id: '',
-        course_id: '', amount: '', payment_method: 'Credit Card'
+        course_id: '', amount: '', payment_method: 'Credit Card',
+        slip_url: ''
     });
+
+    const [uploadingSlip, setUploadingSlip] = useState(false);
 
     useEffect(() => {
         const role = localStorage.getItem('userRole');
         if (!role) { router.push('/login'); return; }
         
         const uid = localStorage.getItem('userId');
+        const generatedPaymentId = 'PAY' + Math.floor(100000 + Math.random() * 900000);
         
         fetch('/api/courses')
             .then(r => r.json())
@@ -69,6 +73,7 @@ export default function CheckoutPage() {
                         const course = data.data.find(c => c.COURSE_ID === queryCourseId);
                         setFormData(prev => ({
                             ...prev,
+                            payment_id: generatedPaymentId,
                             student_id: uid || '',
                             course_id: queryCourseId,
                             amount: course ? course.PRICE : ''
@@ -76,6 +81,7 @@ export default function CheckoutPage() {
                     } else {
                         setFormData(prev => ({
                             ...prev,
+                            payment_id: generatedPaymentId,
                             student_id: uid || ''
                         }));
                     }
@@ -90,9 +96,43 @@ export default function CheckoutPage() {
         setFormData({ ...formData, course_id: courseId, amount: course ? course.PRICE : '' });
     };
 
+    const handleSlipUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setUploadingSlip(true);
+        setError('');
+        
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+        
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: uploadData
+            });
+            const data = await res.json();
+            if (data.success) {
+                setFormData(prev => ({ ...prev, slip_url: data.fileUrl }));
+            } else {
+                setError(data.error || 'Failed to upload slip.');
+            }
+        } catch {
+            setError('Connection error while uploading slip. Please try again.');
+        } finally {
+            setUploadingSlip(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoadingSubmit(true); setError(''); setMessage('');
+
+        if (formData.payment_method === 'Bank Transfer' && !formData.slip_url) {
+            setError("Please upload the bank transfer slip receipt to proceed.");
+            setLoadingSubmit(false);
+            return;
+        }
+
         try {
             const res = await fetch('/api/payments', {
                 method: 'POST',
@@ -101,24 +141,25 @@ export default function CheckoutPage() {
             });
             const data = await res.json();
             if (data.success) {
-                setMessage(data.message || 'Payment processed successfully!');
-                setTimeout(() => router.push('/'), 2500);
+                setMessage(data.message || "Payment completed successfully!");
+                setTimeout(() => router.push('/'), 1500);
             } else {
-                setError(data.error || 'Transaction failed.');
+                setError(data.error || "Payment failed.");
             }
         } catch {
-            setError('Server error. Please try again.');
+            setError("Connection error. Please try again.");
         } finally {
             setLoadingSubmit(false);
         }
     };
 
+    const PAYMENT_METHODS = ['Credit Card', 'Bank Transfer'];
     const selectedCourse = courses.find(c => c.COURSE_ID === formData.course_id);
 
     return (
-        <div style={{ minHeight: '100vh' }}>
+        <div style={{ minHeight: '100vh', paddingBottom: '60px' }}>
             <nav className="cc-nav" style={{ padding: '0 32px' }}>
-                <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px' }}>
+                <div style={{ maxWidth: '1080px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <img 
                             src="/logo.png" 
@@ -140,7 +181,7 @@ export default function CheckoutPage() {
                 </div>
             </nav>
 
-            <div style={{ maxWidth: '900px', margin: '0 auto', padding: '48px 24px' }}>
+            <div style={{ maxWidth: '1080px', margin: '0 auto', padding: '48px 32px' }}>
                 <div style={{ marginBottom: '36px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                         <div style={{
@@ -160,7 +201,7 @@ export default function CheckoutPage() {
                 </div>
 
                 {message && (
-                    <div className="alert-success fade-in" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem' }}>
+                    <div className="alert-success fade-in" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                         </svg>
@@ -177,7 +218,6 @@ export default function CheckoutPage() {
                 )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '28px', alignItems: 'start' }}>
-                    {/* Form */}
                     <div style={{
                         background: '#fff', borderRadius: '20px', border: '1.5px solid #e8eaf6',
                         boxShadow: '0 8px 30px rgba(79,70,229,0.08)', overflow: 'hidden'
@@ -187,15 +227,15 @@ export default function CheckoutPage() {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                                 <div>
                                     <label className="cc-label">Payment ID</label>
-                                    <input className="cc-input" required type="text" placeholder="PAY001"
-                                        value={formData.payment_id}
-                                        onChange={e => setFormData({ ...formData, payment_id: e.target.value })} />
+                                    <input className="cc-input" required type="text" readOnly
+                                        style={{ background: '#f3f4f6', cursor: 'not-allowed', color: '#6b7280' }}
+                                        value={formData.payment_id} />
                                 </div>
                                 <div>
                                     <label className="cc-label">Student ID</label>
-                                    <input className="cc-input" required type="text" placeholder="S001"
-                                        value={formData.student_id}
-                                        onChange={e => setFormData({ ...formData, student_id: e.target.value })} />
+                                    <input className="cc-input" required type="text" readOnly
+                                        style={{ background: '#f3f4f6', cursor: 'not-allowed', color: '#6b7280' }}
+                                        value={formData.student_id} />
                                 </div>
                             </div>
 
@@ -238,7 +278,6 @@ export default function CheckoutPage() {
                                                 style={{ display: 'none' }} />
                                             {m === 'Credit Card' && <IconCard size="14px" />}
                                             {m === 'Bank Transfer' && <IconBank />}
-                                            {m === 'Cash' && <IconCash />}
                                             {m}
                                         </label>
                                     ))}
@@ -264,6 +303,45 @@ export default function CheckoutPage() {
                                             <label className="cc-label">CVC</label>
                                             <input className="cc-input" type="text" placeholder="•••" maxLength={4} />
                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {formData.payment_method === 'Bank Transfer' && (
+                                <div style={{
+                                    background: '#f8f9ff', borderRadius: '12px', padding: '20px',
+                                    border: '1px solid #e0e7ff', marginBottom: '24px'
+                                }}>
+                                    <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280', margin: '0 0 14px 0' }}>Bank Transfer Details</p>
+                                    <div style={{ marginBottom: '14px' }}>
+                                        <label className="cc-label" style={{ color: '#4b5563', marginBottom: '8px' }}>
+                                            🏦 CourseConnect Bank Account:<br/>
+                                            <strong style={{ color: '#111827' }}>Bank: CourseConnect International Bank</strong><br/>
+                                            <strong style={{ color: '#111827' }}>Acc No: 1029384756 (Branch: Colombo HQ)</strong>
+                                        </label>
+                                    </div>
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <label className="cc-label">Upload Payment Slip receipt</label>
+                                        <input 
+                                            type="file" 
+                                            accept="image/*,.pdf" 
+                                            onChange={handleSlipUpload}
+                                            style={{ display: 'block', fontSize: '0.85rem', width: '100%', padding: '10px', background: '#fff', border: '1.5px dashed #c7d2fe', borderRadius: '8px', cursor: 'pointer' }}
+                                        />
+                                        {uploadingSlip && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                                                <div className="spinner" style={{ width: '14px', height: '14px' }} />
+                                                <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Uploading slip...</span>
+                                            </div>
+                                        )}
+                                        {formData.slip_url && (
+                                            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', color: '#059669', fontSize: '0.8rem', fontWeight: 600 }}>
+                                                <span>✅</span> Slip uploaded successfully!
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px 12px', fontSize: '0.75rem', color: '#b45309', fontWeight: 500 }}>
+                                        📝 Please upload a clear photo or PDF receipt. Access to this course is pending admin approval.
                                     </div>
                                 </div>
                             )}

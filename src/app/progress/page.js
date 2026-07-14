@@ -32,25 +32,130 @@ const IconReport = () => (
     </svg>
 );
 
+function ProgressUpdater({ enrollmentId, initialProgress, onUpdated }) {
+    const [progress, setProgress] = useState(initialProgress);
+    const [updating, setUpdating] = useState(false);
+    const [showSlider, setShowSlider] = useState(false);
+
+    useEffect(() => {
+        setProgress(initialProgress);
+    }, [initialProgress]);
+
+    const handleSave = async () => {
+        setUpdating(true);
+        try {
+            const res = await fetch('/api/enrollments', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enrollment_id: enrollmentId, progress_percentage: progress })
+            });
+            const data = await res.json();
+            if (data.success) {
+                onUpdated(progress);
+                setShowSlider(false);
+            }
+        } catch (err) {
+            console.error("Failed to update progress", err);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    return (
+        <div style={{ marginTop: '14px', borderTop: '1px dashed #e2e8f0', paddingTop: '12px' }}>
+            {!showSlider ? (
+                <button
+                    onClick={() => setShowSlider(true)}
+                    className="btn btn-ghost btn-sm"
+                    style={{ width: '100%', justifyContent: 'center', fontSize: '0.75rem', padding: '6px 12px' }}
+                >
+                    ⚙️ Update Progress
+                </button>
+            ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4b5563' }}>Adjust Progress:</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#4f46e5' }}>{progress}%</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="5"
+                            value={progress}
+                            onChange={(e) => setProgress(Number(e.target.value))}
+                            style={{ flex: 1, accentColor: '#4f46e5', cursor: 'pointer' }}
+                        />
+                        <button
+                            onClick={handleSave}
+                            disabled={updating}
+                            className="btn btn-primary btn-sm"
+                            style={{ fontSize: '0.72rem', padding: '4px 10px' }}
+                        >
+                            {updating ? 'Saving...' : 'Save'}
+                        </button>
+                        <button
+                            onClick={() => { setShowSlider(false); setProgress(initialProgress); }}
+                            className="btn btn-ghost btn-sm"
+                            style={{ fontSize: '0.72rem', padding: '4px 10px' }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function StudentProgressPage() {
     const router = useRouter();
     const [studentId, setStudentId] = useState('');
+    const [userRole, setUserRole] = useState('');
     const [enrollments, setEnrollments] = useState([]);
+    const [allStudents, setAllStudents] = useState([]);
     const [searched, setSearched] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
         const role = localStorage.getItem('userRole');
-        if (!role) router.push('/login');
+        const uid = localStorage.getItem('userId');
+        if (!role) {
+            router.push('/login');
+            return;
+        }
+        setUserRole(role);
+        
+        if (role === 'student' && uid) {
+            setStudentId(uid);
+            setLoading(true); setError(''); setSearched(true);
+            fetch(`/api/students/progress?studentId=${uid}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) setEnrollments(data.data);
+                    else setError(data.error || 'Failed to retrieve progress data.');
+                })
+                .catch(() => setError('Connection error. Please try again.'))
+                .finally(() => setLoading(false));
+        }
+
+        // Fetch all registered students for directory access if lecturer/admin
+        if (role === 'lecturer' || role === 'admin') {
+            fetch('/api/students/list')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) setAllStudents(data.data);
+                })
+                .catch(console.error);
+        }
     }, [router]);
 
-    const handleSearch = async (e) => {
-        e.preventDefault();
-        if (!studentId.trim()) return;
+    const triggerSearch = async (targetId) => {
         setLoading(true); setError(''); setSearched(true);
         try {
-            const res = await fetch(`/api/students/progress?studentId=${studentId.trim()}`);
+            const res = await fetch(`/api/students/progress?studentId=${targetId}`);
             const data = await res.json();
             if (data.success) setEnrollments(data.data);
             else setError(data.error || 'Failed to retrieve progress data.');
@@ -59,6 +164,12 @@ export default function StudentProgressPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSearch = async (e) => {
+        if (e) e.preventDefault();
+        if (!studentId.trim()) return;
+        await triggerSearch(studentId.trim());
     };
 
     const completedCount = enrollments.filter(e => e.PROGRESS_PERCENTAGE >= 100 || e.STATUS === 'completed').length;
@@ -118,6 +229,31 @@ export default function StudentProgressPage() {
                     padding: '28px', marginBottom: '32px',
                     boxShadow: '0 4px 16px rgba(79,70,229,0.07)'
                 }}>
+                    {userRole !== 'student' && allStudents.length > 0 && (
+                        <div style={{ marginBottom: '20px', borderBottom: '1.5px dashed #e2e8f0', paddingBottom: '20px' }}>
+                            <label className="cc-label" style={{ display: 'block', marginBottom: '8px', color: '#4f46e5', fontWeight: 700 }}>
+                                Select Student from Directory
+                            </label>
+                            <select
+                                className="cc-input cc-select"
+                                value={studentId}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setStudentId(val);
+                                    if (val) {
+                                        triggerSearch(val);
+                                    }
+                                }}
+                            >
+                                <option value="">— Select a registered student —</option>
+                                {allStudents.map(s => (
+                                    <option key={s.STUDENT_ID} value={s.STUDENT_ID}>
+                                        {s.FIRST_NAME} {s.LAST_NAME} (Username: {s.USERNAME} | Student ID: {s.STUDENT_ID})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     <form onSubmit={handleSearch} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
                         <div style={{ flex: 1 }}>
                             <label className="cc-label">Student ID</label>
@@ -128,6 +264,8 @@ export default function StudentProgressPage() {
                                 onChange={e => setStudentId(e.target.value)}
                                 className="cc-input"
                                 required
+                                readOnly={userRole === 'student'}
+                                style={userRole === 'student' ? { background: '#f3f4f6', cursor: 'not-allowed', color: '#6b7280' } : {}}
                             />
                         </div>
                         <button type="submit" className="btn btn-primary" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -224,6 +362,19 @@ export default function StudentProgressPage() {
                                                     style={{ width: `${pct}%` }}
                                                 />
                                             </div>
+                                            <ProgressUpdater
+                                                enrollmentId={en.ENROLLMENT_ID}
+                                                initialProgress={pct}
+                                                onUpdated={(newProgress) => {
+                                                    setEnrollments(prev =>
+                                                        prev.map(item =>
+                                                            item.ENROLLMENT_ID === en.ENROLLMENT_ID
+                                                                ? { ...item, PROGRESS_PERCENTAGE: newProgress, STATUS: newProgress >= 100 ? 'completed' : 'active' }
+                                                                : item
+                                                        )
+                                                    );
+                                                }}
+                                            />
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
                                                 <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>ID: {en.ENROLLMENT_ID}</span>
                                                 <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#059669' }}>Rs. {Number(en.PRICE).toLocaleString()}</span>
