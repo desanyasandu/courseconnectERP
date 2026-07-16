@@ -23,11 +23,20 @@ export async function POST(request) {
         const body = await request.json();
         const { course_id, lecturer_id, title, description, price, category } = body;
 
+        if (!course_id || !lecturer_id || !title || !description || price === undefined || price === null || price === '' || !category) {
+            return NextResponse.json({ success: false, error: "All fields are required. Please fill out all fields before publishing." }, { status: 400 });
+        }
+
+        const numericPrice = Number(price);
+        if (isNaN(numericPrice) || numericPrice < 0) {
+            return NextResponse.json({ success: false, error: "Price must be a valid non-negative number." }, { status: 400 });
+        }
+
         const query = `
             INSERT INTO COURSE (course_id, lecturer_id, title, description, price, category, is_published) 
             VALUES (:1, :2, :3, :4, :5, :6, 1)
         `;
-        const binds = [course_id, lecturer_id, title, description, price, category];
+        const binds = [course_id, lecturer_id, title, description, numericPrice, category];
 
         await executeOracleQuery(query, binds, true); // true enables auto-commit
         return NextResponse.json({ success: true, message: "Course created successfully!" });
@@ -42,12 +51,21 @@ export async function PUT(request) {
         const body = await request.json();
         const { course_id, title, description, price, category } = body;
         
+        if (!course_id || !title || !description || price === undefined || price === null || price === '' || !category) {
+            return NextResponse.json({ success: false, error: "All fields are required." }, { status: 400 });
+        }
+
+        const numericPrice = Number(price);
+        if (isNaN(numericPrice) || numericPrice < 0) {
+            return NextResponse.json({ success: false, error: "Price must be a valid non-negative number." }, { status: 400 });
+        }
+
         const query = `
             UPDATE COURSE 
             SET title = :1, description = :2, price = :3, category = :4 
             WHERE course_id = :5
         `;
-        const binds = [title, description, price, category, course_id];
+        const binds = [title, description, numericPrice, category, course_id];
         
         await executeOracleQuery(query, binds, true);
         return NextResponse.json({ success: true, message: "Course updated successfully!" });

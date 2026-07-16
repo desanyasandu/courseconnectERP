@@ -44,13 +44,18 @@ async function seedOracle(executeOracleQuery) {
     // 2. Insert Lecturer Profile
     console.log('Seeding LECTURER table...');
     try {
-        await executeOracleQuery(`DELETE FROM LECTURER WHERE lecturer_id = 'U002'`, [], true);
+        await executeOracleQuery(`DELETE FROM LECTURER WHERE lecturer_id IN ('U002', 'U001')`, [], true);
         await executeOracleQuery(
             `INSERT INTO LECTURER (lecturer_id, first_name, last_name) VALUES (:1, :2, :3)`,
             ['U002', 'John', 'Doe'],
             true
         );
-        console.log('Successfully seeded lecturer profile for U002');
+        await executeOracleQuery(
+            `INSERT INTO LECTURER (lecturer_id, first_name, last_name) VALUES (:1, :2, :3)`,
+            ['U001', 'Admin', 'User'],
+            true
+        );
+        console.log('Successfully seeded lecturer profile for U002 and U001');
     } catch (err) {
         console.error('Error seeding lecturer profile:', err.message);
     }

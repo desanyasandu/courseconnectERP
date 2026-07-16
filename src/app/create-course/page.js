@@ -151,6 +151,7 @@ export default function CreateCoursePage() {
     const router = useRouter();
     const [loading, setLoading]   = useState(false);
     const [success, setSuccess]   = useState(false);
+    const [error, setError]       = useState('');
     const [lecturerName, setLecturerName] = useState('');
     const [formData, setFormData] = useState({
         course_id: '', lecturer_id: '',
@@ -169,19 +170,48 @@ export default function CreateCoursePage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Frontend validation
+        if (!formData.title.trim()) {
+            setError('Course Title is required.');
+            return;
+        }
+        if (!formData.price || formData.price.trim() === '') {
+            setError('Course Price is required.');
+            return;
+        }
+        const numericPrice = Number(formData.price);
+        if (isNaN(numericPrice) || numericPrice < 0) {
+            setError('Course Price must be a valid non-negative number.');
+            return;
+        }
+        if (!formData.category) {
+            setError('Please select a Category.');
+            return;
+        }
+        if (!formData.description.trim()) {
+            setError('Course Description is required.');
+            return;
+        }
+
         setLoading(true);
+        setError('');
         try {
             const res = await fetch('/api/courses', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-            if (res.ok) {
+            const data = await res.json();
+            if (res.ok && data.success) {
                 setSuccess(true);
                 setTimeout(() => router.push('/'), 2200);
+            } else {
+                setError(data.error || 'Failed to publish the course. Please try again.');
             }
         } catch (err) {
             console.error(err);
+            setError('An error occurred. Please check your network connection.');
         } finally {
             setLoading(false);
         }
@@ -236,6 +266,14 @@ export default function CreateCoursePage() {
                     <div className="alert-success scale-pop" style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.95rem' }} role="status" aria-live="polite">
                         <span aria-hidden="true">🎉</span>
                         Course published! Redirecting to dashboard...
+                    </div>
+                )}
+
+                {/* Error banner */}
+                {error && (
+                    <div className="alert-error fade-in" style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.95rem' }} role="alert">
+                        <span aria-hidden="true">⚠️</span>
+                        {error}
                     </div>
                 )}
 
